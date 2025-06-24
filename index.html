@@ -94,7 +94,23 @@
     <div id="tooltip"></div>
     <div id="visualization" class="grid-container"></div>
 
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <body>
+  <!-- All your D3 content (like the SVG container) goes inside this div -->
+  <div data-netlify-identity-menu></div> <!-- This creates the login/logout menu -->
+
+  <div data-netlify-identity-role="*">
+    <h1>My D3 Visualization</h1>
+    <!-- Your SVG container or other elements for the chart go here -->
+    <div id="my-d3-chart"></div>
+  </div>
+
+  <!-- Your D3 script tag -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="script.js"></script> <!-- Or your script might be inline -->
+  
+  <!-- The Netlify Identity Widget script at the very end -->
+  <script type.text/javascript" src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</body>
     <script>
         // --- 1. CONFIGURATION ---
         const margin = { top: 50, right: 30, bottom: 30, left: 150 },
