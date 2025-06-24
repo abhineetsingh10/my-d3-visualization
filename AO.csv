@@ -1,0 +1,21 @@
+student_name,grade,school_name,school_id,block_name,district_name,date,sc_1,sc_2,sc_3,sc_4,sc_5,sc_6,sc_7,sc_8,sc_9,sc_10,sc_11,sc_12
+Aarav Patel,6,Vidya Mandir,VM101,Central Block,East District,0,1,1,1,0.9,0.9,0.1,0.2,0.1,0,0,0,0
+Aarav Patel,6,Vidya Mandir,VM101,Central Block,East District,1,1,1,1,1,1,0.5,0.6,0.5,0.1,0.2,0.1,0.1
+Aarav Patel,6,Vidya Mandir,VM101,Central Block,East District,2,1,1,1,1,1,0.8,0.7,0.8,0.3,0.4,0.3,0.2
+Aarav Patel,6,Vidya Mandir,VM101,Central Block,East District,3,1,1,1,1,1,0.9,0.9,0.9,0.5,0.6,0.5,0.4
+Diya Singh,6,Vidya Mandir,VM101,Central Block,East District,0,1,0.9,0.9,0.8,0.8,0.2,0.2,0.3,0,0,0,0
+Diya Singh,6,Vidya Mandir,VM101,Central Block,East District,1,1,1,1,1,1,0.6,0.5,0.6,0.2,0.1,0.2,0.2
+Diya Singh,6,Vidya Mandir,VM101,Central Block,East District,2,1,1,1,1,1,0.7,0.8,0.7,0.4,0.3,0.4,0.3
+Diya Singh,6,Vidya Mandir,VM101,Central Block,East District,3,1,1,1,1,1,0.9,0.8,0.9,0.6,0.5,0.6,0.5
+Rohan Mehta,7,Vidya Mandir,VM101,Central Block,East District,0,1,1,1,1,1,0.1,0.1,0.2,0,0,0,0
+Rohan Mehta,7,Vidya Mandir,VM101,Central Block,East District,1,1,1,1,1,1,0.4,0.5,0.4,0.1,0.2,0.1,0.1
+Rohan Mehta,7,Vidya Mandir,VM101,Central Block,East District,2,1,1,1,1,1,0.8,0.8,0.7,0.3,0.3,0.4,0.3
+Rohan Mehta,7,Vidya Mandir,VM101,Central Block,East District,3,1,1,1,1,1,0.9,0.9,0.9,0.5,0.6,0.5,0.5
+Priya Sharma,7,Vidya Mandir,VM101,Central Block,East District,0,0.8,0.7,0.5,0.4,0.3,0.1,0,0,0,0,0,0
+Priya Sharma,7,Vidya Mandir,VM101,Central Block,East District,1,0.8,0.7,0.6,0.5,0.4,0.2,0.1,0.1,0,0.1,0,0
+Priya Sharma,7,Vidya Mandir,VM101,Central Block,East District,2,0.8,0.8,0.6,0.5,0.5,0.2,0.2,0.1,0.1,0.1,0.1,0.1
+Priya Sharma,7,Vidya Mandir,VM101,Central Block,East District,3,0.8,0.8,0.7,0.6,0.5,0.3,0.2,0.2,0.1,0.2,0.1,0.1
+Arjun Kumar,6,Gyan Jyoti School,GJS202,North Block,East District,0,1,1,0.9,0.9,0.8,0.3,0.2,0.3,0,0.1,0,0
+Arjun Kumar,6,Gyan Jyoti School,GJS202,North Block,East District,1,1,1,1,1,0.9,0.6,0.7,0.6,0.2,0.2,0.3,0.2
+Arjun Kumar,6,Gyan Jyoti School,GJS202,North Block,East District,2,1,1,1,1,1,0.8,0.9,0.8,0.5,0.4,0.5,0.4
+Arjun Kumar,6,Gyan Jyoti School,GJS202,North Block,East District,3,1,1,1,1,1,1,0.9,0.9,0.7,0.6,0.7,0.6
