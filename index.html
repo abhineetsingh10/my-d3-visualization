@@ -5,10 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Status Profile</title>
     <style>
-        /* //--> 1. This new CSS rule hides your entire app by default. */
-        #app-container {
-            display: none;
+        /* --- NEW CSS FOR LOGIN CONTROL --- */
+
+        /* 1. By default, hide the main application elements. */
+        /*    We use visibility:hidden to prevent layout shifts. */
+        #app-title, .controls, .slider-container, #visualization {
+            visibility: hidden;
         }
+
+        /* 2. When the body has the 'user-logged-in' class, make the elements visible again. */
+        body.user-logged-in #app-title,
+        body.user-logged-in .controls,
+        body.user-logged-in .slider-container,
+        body.user-logged-in #visualization {
+            visibility: visible;
+        }
+
+        /* --- YOUR ORIGINAL CSS (UNCHANGED) --- */
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             background-color: #f4f4f9;
@@ -78,47 +91,48 @@
 </head>
 <body>
 
-    <!--//--> 2. This button/menu will always be visible for users to log in. -->
+    <!-- This menu is always visible for login/logout -->
     <div data-netlify-identity-menu></div>
 
-    <!--//--> 3. Your entire application is now wrapped in this single container. -->
-    <div id="app-container">
-        <h1>Interactive Status Profile</h1>
+    <!-- YOUR ORIGINAL HTML (I added an ID to the h1 for easy targeting) -->
+    <h1 id="app-title">Interactive Status Profile</h1>
 
-        <div class="controls">
-            <label for="district-select">District:</label>
-            <select id="district-select"></select>
-            <label for="block-select">Block:</label>
-            <select id="block-select"></select>
-            <label for="school-select">School:</label>
-            <select id="school-select"></select>
-        </div>
-        
-        <div class="slider-container">
-            <label for="time-slider">Day:</label>
-            <input type="range" id="time-slider" min="0" max="0" step="1">
-            <span id="day-label">0</span>
-        </div>
-
-        <div id="tooltip"></div>
-        <div id="visualization" class="grid-container"></div>
+    <div class="controls">
+        <label for="district-select">District:</label>
+        <select id="district-select"></select>
+        <label for="block-select">Block:</label>
+        <select id="block-select"></select>
+        <label for="school-select">School:</label>
+        <select id="school-select"></select>
+    </div>
+    
+    <div class="slider-container">
+        <label for="time-slider">Day:</label>
+        <input type="range" id="time-slider" min="0" max="0" step="1">
+        <span id="day-label">0</span>
     </div>
 
+    <div id="tooltip"></div>
+    <div id="visualization" class="grid-container"></div>
 
     <!-- SCRIPT TAGS -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script type="text/javascript" src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
     
-    <!--//--> 4. This new script block now controls everything. -->
+    <!-- REVISED SCRIPT TO CONTROL VISIBILITY -->
     <script>
-        const appContainer = document.getElementById('app-container');
+        // A flag to prevent the app from initializing more than once
+        let appInitialized = false;
 
-        // This function shows the app and runs your D3 visualization code.
         function initializeApp() {
-            appContainer.style.display = 'flex'; // Use 'flex' to match your body styling
+            // If already initialized, do nothing.
+            if (appInitialized) return;
+            appInitialized = true;
+
+            // Add the class to the body to make the app visible
+            document.body.classList.add('user-logged-in');
             
-            // --- ALL OF YOUR ORIGINAL D3 JAVASCRIPT IS NOW SAFELY INSIDE THIS FUNCTION ---
-            // --- It will NOT run until a user is logged in. ---
+            // --- ALL OF YOUR D3 CODE IS NOW CALLED FROM HERE ---
             
             // --- 1. CONFIGURATION ---
             const margin = { top: 50, right: 30, bottom: 30, left: 150 },
@@ -140,20 +154,12 @@
                 .attr("transform", `translate(${margin.left},${margin.top})`);
 
             const tooltip = d3.select("#tooltip");
-
             const colorScale = d3.scaleSequential(d3.interpolateRdYlGn).domain([0, 1]);
-
-            // Scales for layout
-            const xCategory = d3.scaleBand()
-                .domain(categories)
-                .range([0, width])
-                .padding(0.1);
+            const xCategory = d3.scaleBand().domain(categories).range([0, width]).padding(0.1);
+            const dataUrl = 'https://gist.githubusercontent.com/abhineetsingh10/e1c7721e34d8ecf626a3ce22214c5b55/raw/2a2826106864d2fa195a83ff42672773329c0e7b/AO.csv';
             
-            const dataUrl = 'https://gist.githubusercontent.com/abhineetsingh10/e1c7721e34d8ecf626a3ce22214c5b55/raw/2a2826106864d2fa195a83ff42672773329c0e7b/AO.csv';     
             // --- 3. DATA LOADING AND PROCESSING ---
             d3.csv(dataUrl, d3.autoType).then(data => {
-
-                // --- 3a. SETUP FILTERS AND SLIDER ---
                 const nestedData = d3.group(data, d => d.district_name, d => d.block_name, d => d.school_name);
                 const districts = Array.from(nestedData.keys());
                 
@@ -163,29 +169,24 @@
                 const timeSlider = d3.select("#time-slider");
                 const dayLabel = d3.select("#day-label");
 
-                // Populate districts
-                districtSelect.selectAll('option').data(districts)
-                    .join('option').text(d => d).attr('value', d => d);
-
-                // Set up event listeners
+                districtSelect.selectAll('option').data(districts).join('option').text(d => d).attr('value', d => d);
                 districtSelect.on('change', updateBlockFilter);
                 blockSelect.on('change', updateSchoolFilter);
                 schoolSelect.on('change', drawVisualization);
                 timeSlider.on('input', drawVisualization);
-
-                const maxDay = d3.max(data, d => d.date);
-                timeSlider.attr("max", maxDay);
+                timeSlider.attr("max", d3.max(data, d => d.date));
                 
-                // --- 3b. DRAWING LOGIC ---
                 let expandedGrades = new Set();
-
+                function updateBlockFilter() { /* ... your function ... */ }
+                function updateSchoolFilter() { /* ... your function ... */ }
+                function drawVisualization() { /* ... your function ... */ }
+                
+                // Copy your functions here
                 function updateBlockFilter() {
                     const selectedDistrict = districtSelect.property('value');
                     if (!selectedDistrict) return; 
-
                     const blocks = Array.from(nestedData.get(selectedDistrict).keys());
-                    blockSelect.selectAll('option').data(blocks)
-                        .join('option').text(d => d).attr('value', d => d);
+                    blockSelect.selectAll('option').data(blocks).join('option').text(d => d).attr('value', d => d);
                     updateSchoolFilter();
                 }
 
@@ -193,140 +194,61 @@
                     const selectedDistrict = districtSelect.property('value');
                     const selectedBlock = blockSelect.property('value');
                     if (!selectedDistrict || !selectedBlock) return;
-
                     const schools = Array.from(nestedData.get(selectedDistrict).get(selectedBlock).keys());
-                    schoolSelect.selectAll('option').data(schools)
-                        .join('option').text(d => d).attr('value', d => d);
+                    schoolSelect.selectAll('option').data(schools).join('option').text(d => d).attr('value', d => d);
                     drawVisualization();
                 }
 
                 function drawVisualization() {
                     const selectedSchool = schoolSelect.property('value');
-                    if (!selectedSchool) {
-                        svg.selectAll("*").remove();
-                        return;
-                    }
-
+                    if (!selectedSchool) { svg.selectAll("*").remove(); return; }
                     const currentDay = +timeSlider.property('value');
                     dayLabel.text(currentDay);
-
                     const schoolDataForDay = data.filter(d => d.school_name === selectedSchool && d.date === currentDay);
-                    
                     const gradeGroups = d3.group(schoolDataForDay, d => d.grade);
                     let displayData = [];
-
                     gradeGroups.forEach((students, grade) => {
                         const gradeAverages = {};
-                        Object.values(STATUS_CATEGORIES).flat().forEach(sc => {
-                            gradeAverages[sc] = d3.mean(students, d => d[sc]);
-                        });
+                        Object.values(STATUS_CATEGORIES).flat().forEach(sc => { gradeAverages[sc] = d3.mean(students, d => d[sc]); });
                         displayData.push({ type: 'grade', id: `grade-${grade}`, label: `Grade ${grade}`, data: gradeAverages });
-
                         if (expandedGrades.has(grade)) {
-                            students.forEach(student => {
-                                displayData.push({ type: 'student', id: student.student_name, label: student.student_name, data: student, grade: grade });
-                            });
+                            students.forEach(student => { displayData.push({ type: 'student', id: student.student_name, label: student.student_name, data: student, grade: grade }); });
                         }
                     });
-
-                    // --- 4. D3 VISUALIZATION - ENTER/UPDATE/EXIT ---
-                    svg.selectAll(".header-label").data(categories)
-                        .join("text")
-                        .attr("class", "header-label")
-                        .attr("x", d => xCategory(d) + xCategory.bandwidth() / 2)
-                        .attr("y", -10)
-                        .attr("text-anchor", "middle")
-                        .text(d => d);
-
-                    const rows = svg.selectAll(".data-row")
-                        .data(displayData, d => d.id);
-
+                    svg.selectAll(".header-label").data(categories).join("text").attr("class", "header-label").attr("x", d => xCategory(d) + xCategory.bandwidth() / 2).attr("y", -10).attr("text-anchor", "middle").text(d => d);
+                    const rows = svg.selectAll(".data-row").data(displayData, d => d.id);
                     rows.exit().remove();
-
-                    const rowsEnter = rows.enter().append("g")
-                        .attr("class", d => `data-row ${d.type}-row`);
-
-                    rowsEnter.append("text")
-                        .attr("class", "row-label")
-                        .attr("x", -10)
-                        .attr("y", 20)
-                        .attr("text-anchor", "end")
-                        .style("font-style", d => d.type === 'student' ? 'italic' : 'normal')
-                        .style("fill", d => d.type === 'student' ? '#555' : '#000')
-                        .text(d => d.label);
-                    
-                    rowsEnter.filter(d => d.type === 'grade')
-                        .on('click', (event, d) => {
-                            const grade = parseInt(d.label.split(' ')[1]);
-                            if (expandedGrades.has(grade)) {
-                                expandedGrades.delete(grade);
-                            } else {
-                                expandedGrades.add(grade);
-                            }
-                            drawVisualization();
-                        });
-
+                    const rowsEnter = rows.enter().append("g").attr("class", d => `data-row ${d.type}-row`);
+                    rowsEnter.append("text").attr("class", "row-label").attr("x", -10).attr("y", 20).attr("text-anchor", "end").style("font-style", d => d.type === 'student' ? 'italic' : 'normal').style("fill", d => d.type === 'student' ? '#555' : '#000').text(d => d.label);
+                    rowsEnter.filter(d => d.type === 'grade').on('click', (event, d) => { const grade = parseInt(d.label.split(' ')[1]); if (expandedGrades.has(grade)) { expandedGrades.delete(grade); } else { expandedGrades.add(grade); } drawVisualization(); });
                     const allRows = rowsEnter.merge(rows);
-
-                    allRows.transition().duration(500)
-                        .attr("transform", (d, i) => `translate(0, ${i * 40})`);
-
+                    allRows.transition().duration(500).attr("transform", (d, i) => `translate(0, ${i * 40})`);
                     categories.forEach(category => {
                         const statusCodes = STATUS_CATEGORIES[category];
-                        
-                        const dots = allRows.selectAll(`.dot-${category}`)
-                            .data(d => statusCodes.map(sc => ({ 
-                                sc: sc, 
-                                value: d.data[sc], 
-                                owner: d.label 
-                            })));
-
-                        dots.enter().append("circle")
-                            .attr("class", `dot dot-${category}`)
-                            .attr("cy", 20)
-                            .attr("r", 8)
-                            .merge(dots)
-                            .attr("cx", (d, i) => xCategory(category) + (i * 25) + 20)
-                            .on('mouseover', (event, d) => {
-                                tooltip.style('opacity', 1)
-                                    .html(`<strong>${d.owner}</strong><br>Status: ${d.sc}<br>Value: ${d.value.toFixed(2)}`);
-                            })
-                            .on('mousemove', (event) => {
-                                tooltip.style('left', (event.pageX + 15) + 'px')
-                                    .style('top', (event.pageY - 28) + 'px');
-                            })
-                            .on('mouseout', () => {
-                                tooltip.style('opacity', 0);
-                            })
-                            .transition().duration(300)
-                            .attr("fill", d => d.value !== undefined ? colorScale(d.value) : '#ccc');
+                        const dots = allRows.selectAll(`.dot-${category}`).data(d => statusCodes.map(sc => ({ sc: sc, value: d.data[sc], owner: d.label })));
+                        dots.enter().append("circle").attr("class", `dot dot-${category}`).attr("cy", 20).attr("r", 8).merge(dots).attr("cx", (d, i) => xCategory(category) + (i * 25) + 20).on('mouseover', (event, d) => { tooltip.style('opacity', 1).html(`<strong>${d.owner}</strong><br>Status: ${d.sc}<br>Value: ${d.value.toFixed(2)}`); }).on('mousemove', (event) => { tooltip.style('left', (event.pageX + 15) + 'px').style('top', (event.pageY - 28) + 'px'); }).on('mouseout', () => { tooltip.style('opacity', 0); }).transition().duration(300).attr("fill", d => d.value !== undefined ? colorScale(d.value) : '#ccc');
                     });
                 }
                 
-                updateBlockFilter(); 
+                updateBlockFilter();
             });
-        } // End of initializeApp() function
-
-        // This function hides the app, for example on logout
-        function hideApp() {
-            appContainer.style.display = 'none';
-        }
+        } // End of initializeApp()
 
         // --- NETLIFY IDENTITY EVENT LISTENERS ---
-        // Check if a user is already logged in when the page loads
         if (netlifyIdentity.currentUser()) {
             initializeApp();
         }
 
-        // Listen for the login event
         netlifyIdentity.on('login', user => {
-            netlifyIdentity.close(); // Close the login modal
+            netlifyIdentity.close();
             initializeApp();
         });
 
-        // Listen for the logout event
         netlifyIdentity.on('logout', () => {
-            hideApp();
+            // On logout, we simply remove the class to hide the content again.
+            document.body.classList.remove('user-logged-in');
+            // We could also reload the page to ensure a clean state.
+            // window.location.href = "/";
         });
     </script>
 
