@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interactive Status Profile</title>
     <style>
+        /* //--> 1. This new CSS rule hides your entire app by default. */
+        #app-container {
+            display: none;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             background-color: #f4f4f9;
@@ -74,245 +78,255 @@
 </head>
 <body>
 
-    <h1>Interactive Status Profile</h1>
+    <!--//--> 2. This button/menu will always be visible for users to log in. -->
+    <div data-netlify-identity-menu></div>
 
-    <div class="controls">
-        <label for="district-select">District:</label>
-        <select id="district-select"></select>
-        <label for="block-select">Block:</label>
-        <select id="block-select"></select>
-        <label for="school-select">School:</label>
-        <select id="school-select"></select>
-    </div>
-    
-    <div class="slider-container">
-        <label for="time-slider">Day:</label>
-        <input type="range" id="time-slider" min="0" max="0" step="1">
-        <span id="day-label">0</span>
-    </div>
+    <!--//--> 3. Your entire application is now wrapped in this single container. -->
+    <div id="app-container">
+        <h1>Interactive Status Profile</h1>
 
-    <div id="tooltip"></div>
-    <div id="visualization" class="grid-container"></div>
-
-    <body>
-  <!-- All your D3 content (like the SVG container) goes inside this div -->
-  <div data-netlify-identity-menu></div> <!-- This creates the login/logout menu -->
-
-  <div data-netlify-identity-role="*">
-    <h1>My D3 Visualization</h1>
-    <!-- Your SVG container or other elements for the chart go here -->
-    <div id="my-d3-chart"></div>
-  </div>
-
-  <!-- Your D3 script tag -->
-  <script src="https://d3js.org/d3.v7.min.js"></script>
-  <script src="script.js"></script> <!-- Or your script might be inline -->
-  
-  <!-- The Netlify Identity Widget script at the very end -->
-  <script type.text/javascript" src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-</body>
-    <script>
-        // --- 1. CONFIGURATION ---
-        const margin = { top: 50, right: 30, bottom: 30, left: 150 },
-            width = 1100 - margin.left - margin.right,
-            height = 600 - margin.top - margin.bottom;
-
-        const STATUS_CATEGORIES = {
-            'Onboarding': ['sc_1', 'sc_2', 'sc_3', 'sc_4', 'sc_5'],
-            'Participation': ['sc_6', 'sc_7', 'sc_8'],
-            'Progress': ['sc_9', 'sc_10', 'sc_11', 'sc_12']
-        };
-        const categories = Object.keys(STATUS_CATEGORIES);
-
-        // --- 2. SETUP SVG AND ELEMENTS ---
-        const svg = d3.select("#visualization").append("svg")
-            .attr("width", width + margin.left + margin.right)
-            .attr("height", height + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", `translate(${margin.left},${margin.top})`);
-
-        const tooltip = d3.select("#tooltip");
-
-        const colorScale = d3.scaleSequential(d3.interpolateRdYlGn).domain([0, 1]);
-
-        // Scales for layout
-        const xCategory = d3.scaleBand()
-            .domain(categories)
-            .range([0, width])
-            .padding(0.1);
+        <div class="controls">
+            <label for="district-select">District:</label>
+            <select id="district-select"></select>
+            <label for="block-select">Block:</label>
+            <select id="block-select"></select>
+            <label for="school-select">School:</label>
+            <select id="school-select"></select>
+        </div>
         
-        const dataUrl = 'https://gist.githubusercontent.com/abhineetsingh10/e1c7721e34d8ecf626a3ce22214c5b55/raw/2a2826106864d2fa195a83ff42672773329c0e7b/AO.csv';     
-        // --- 3. DATA LOADING AND PROCESSING ---
-        d3.csv(dataUrl, d3.autoType).then(data => {
+        <div class="slider-container">
+            <label for="time-slider">Day:</label>
+            <input type="range" id="time-slider" min="0" max="0" step="1">
+            <span id="day-label">0</span>
+        </div>
 
-            // --- 3a. SETUP FILTERS AND SLIDER ---
-            const nestedData = d3.group(data, d => d.district_name, d => d.block_name, d => d.school_name);
-            const districts = Array.from(nestedData.keys());
+        <div id="tooltip"></div>
+        <div id="visualization" class="grid-container"></div>
+    </div>
+
+
+    <!-- SCRIPT TAGS -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script type="text/javascript" src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+    
+    <!--//--> 4. This new script block now controls everything. -->
+    <script>
+        const appContainer = document.getElementById('app-container');
+
+        // This function shows the app and runs your D3 visualization code.
+        function initializeApp() {
+            appContainer.style.display = 'flex'; // Use 'flex' to match your body styling
             
-            const districtSelect = d3.select("#district-select");
-            const blockSelect = d3.select("#block-select");
-            const schoolSelect = d3.select("#school-select");
-            const timeSlider = d3.select("#time-slider");
-            const dayLabel = d3.select("#day-label");
-
-            // Populate districts
-            districtSelect.selectAll('option').data(districts)
-                .join('option').text(d => d).attr('value', d => d);
-
-            // Set up event listeners
-            districtSelect.on('change', updateBlockFilter);
-            blockSelect.on('change', updateSchoolFilter);
-            schoolSelect.on('change', drawVisualization);
-            timeSlider.on('input', drawVisualization);
-
-            const maxDay = d3.max(data, d => d.date);
-            timeSlider.attr("max", maxDay);
+            // --- ALL OF YOUR ORIGINAL D3 JAVASCRIPT IS NOW SAFELY INSIDE THIS FUNCTION ---
+            // --- It will NOT run until a user is logged in. ---
             
-            // --- 3b. DRAWING LOGIC ---
-            // FIX #1: Moved this line up to prevent the 'ReferenceError'
-            let expandedGrades = new Set();
+            // --- 1. CONFIGURATION ---
+            const margin = { top: 50, right: 30, bottom: 30, left: 150 },
+                width = 1100 - margin.left - margin.right,
+                height = 600 - margin.top - margin.bottom;
 
-            function updateBlockFilter() {
-                const selectedDistrict = districtSelect.property('value');
-                // FIX #2 (part a): Add a guard clause.
-                if (!selectedDistrict) return; 
+            const STATUS_CATEGORIES = {
+                'Onboarding': ['sc_1', 'sc_2', 'sc_3', 'sc_4', 'sc_5'],
+                'Participation': ['sc_6', 'sc_7', 'sc_8'],
+                'Progress': ['sc_9', 'sc_10', 'sc_11', 'sc_12']
+            };
+            const categories = Object.keys(STATUS_CATEGORIES);
 
-                const blocks = Array.from(nestedData.get(selectedDistrict).keys());
-                blockSelect.selectAll('option').data(blocks)
+            // --- 2. SETUP SVG AND ELEMENTS ---
+            const svg = d3.select("#visualization").append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            const tooltip = d3.select("#tooltip");
+
+            const colorScale = d3.scaleSequential(d3.interpolateRdYlGn).domain([0, 1]);
+
+            // Scales for layout
+            const xCategory = d3.scaleBand()
+                .domain(categories)
+                .range([0, width])
+                .padding(0.1);
+            
+            const dataUrl = 'https://gist.githubusercontent.com/abhineetsingh10/e1c7721e34d8ecf626a3ce22214c5b55/raw/2a2826106864d2fa195a83ff42672773329c0e7b/AO.csv';     
+            // --- 3. DATA LOADING AND PROCESSING ---
+            d3.csv(dataUrl, d3.autoType).then(data => {
+
+                // --- 3a. SETUP FILTERS AND SLIDER ---
+                const nestedData = d3.group(data, d => d.district_name, d => d.block_name, d => d.school_name);
+                const districts = Array.from(nestedData.keys());
+                
+                const districtSelect = d3.select("#district-select");
+                const blockSelect = d3.select("#block-select");
+                const schoolSelect = d3.select("#school-select");
+                const timeSlider = d3.select("#time-slider");
+                const dayLabel = d3.select("#day-label");
+
+                // Populate districts
+                districtSelect.selectAll('option').data(districts)
                     .join('option').text(d => d).attr('value', d => d);
-                updateSchoolFilter();
-            }
 
-            function updateSchoolFilter() {
-                const selectedDistrict = districtSelect.property('value');
-                const selectedBlock = blockSelect.property('value');
-                // FIX #2 (part b): Add a guard clause.
-                if (!selectedDistrict || !selectedBlock) return;
+                // Set up event listeners
+                districtSelect.on('change', updateBlockFilter);
+                blockSelect.on('change', updateSchoolFilter);
+                schoolSelect.on('change', drawVisualization);
+                timeSlider.on('input', drawVisualization);
 
-                const schools = Array.from(nestedData.get(selectedDistrict).get(selectedBlock).keys());
-                schoolSelect.selectAll('option').data(schools)
-                    .join('option').text(d => d).attr('value', d => d);
-                drawVisualization();
-            }
+                const maxDay = d3.max(data, d => d.date);
+                timeSlider.attr("max", maxDay);
+                
+                // --- 3b. DRAWING LOGIC ---
+                let expandedGrades = new Set();
 
-            function drawVisualization() {
-                // Get current selections
-                const selectedSchool = schoolSelect.property('value');
-                // FIX #2 (part c): Add a final guard clause for drawing.
-                if (!selectedSchool) {
-                    svg.selectAll("*").remove(); // Clear the chart if no school is selected
-                    return;
+                function updateBlockFilter() {
+                    const selectedDistrict = districtSelect.property('value');
+                    if (!selectedDistrict) return; 
+
+                    const blocks = Array.from(nestedData.get(selectedDistrict).keys());
+                    blockSelect.selectAll('option').data(blocks)
+                        .join('option').text(d => d).attr('value', d => d);
+                    updateSchoolFilter();
                 }
 
-                const currentDay = +timeSlider.property('value');
-                dayLabel.text(currentDay);
+                function updateSchoolFilter() {
+                    const selectedDistrict = districtSelect.property('value');
+                    const selectedBlock = blockSelect.property('value');
+                    if (!selectedDistrict || !selectedBlock) return;
 
-                // Filter data for the current view
-                const schoolDataForDay = data.filter(d => d.school_name === selectedSchool && d.date === currentDay);
-                
-                // Process data into the desired hierarchical structure
-                const gradeGroups = d3.group(schoolDataForDay, d => d.grade);
-                let displayData = [];
+                    const schools = Array.from(nestedData.get(selectedDistrict).get(selectedBlock).keys());
+                    schoolSelect.selectAll('option').data(schools)
+                        .join('option').text(d => d).attr('value', d => d);
+                    drawVisualization();
+                }
 
-                gradeGroups.forEach((students, grade) => {
-                    // Add grade row (average scores)
-                    const gradeAverages = {};
-                    Object.values(STATUS_CATEGORIES).flat().forEach(sc => {
-                        gradeAverages[sc] = d3.mean(students, d => d[sc]);
-                    });
-                    displayData.push({ type: 'grade', id: `grade-${grade}`, label: `Grade ${grade}`, data: gradeAverages });
-
-                    // Add student rows if grade is expanded
-                    if (expandedGrades.has(grade)) {
-                        students.forEach(student => {
-                            displayData.push({ type: 'student', id: student.student_name, label: student.student_name, data: student, grade: grade });
-                        });
+                function drawVisualization() {
+                    const selectedSchool = schoolSelect.property('value');
+                    if (!selectedSchool) {
+                        svg.selectAll("*").remove();
+                        return;
                     }
-                });
 
-                // --- 4. D3 VISUALIZATION - ENTER/UPDATE/EXIT ---
-                
-                // Headers
-                svg.selectAll(".header-label").data(categories)
-                    .join("text")
-                    .attr("class", "header-label")
-                    .attr("x", d => xCategory(d) + xCategory.bandwidth() / 2)
-                    .attr("y", -10)
-                    .attr("text-anchor", "middle")
-                    .text(d => d);
+                    const currentDay = +timeSlider.property('value');
+                    dayLabel.text(currentDay);
 
-                // Rows (using <g> for each row)
-                const rows = svg.selectAll(".data-row")
-                    .data(displayData, d => d.id);
+                    const schoolDataForDay = data.filter(d => d.school_name === selectedSchool && d.date === currentDay);
+                    
+                    const gradeGroups = d3.group(schoolDataForDay, d => d.grade);
+                    let displayData = [];
 
-                rows.exit().remove();
+                    gradeGroups.forEach((students, grade) => {
+                        const gradeAverages = {};
+                        Object.values(STATUS_CATEGORIES).flat().forEach(sc => {
+                            gradeAverages[sc] = d3.mean(students, d => d[sc]);
+                        });
+                        displayData.push({ type: 'grade', id: `grade-${grade}`, label: `Grade ${grade}`, data: gradeAverages });
 
-                const rowsEnter = rows.enter().append("g")
-                    .attr("class", d => `data-row ${d.type}-row`);
-
-                // Add row labels
-                rowsEnter.append("text")
-                    .attr("class", "row-label")
-                    .attr("x", -10)
-                    .attr("y", 20)
-                    .attr("text-anchor", "end")
-                    .style("font-style", d => d.type === 'student' ? 'italic' : 'normal')
-                    .style("fill", d => d.type === 'student' ? '#555' : '#000')
-                    .text(d => d.label);
-                
-                // Add click handler for grades
-                rowsEnter.filter(d => d.type === 'grade')
-                    .on('click', (event, d) => {
-                        const grade = parseInt(d.label.split(' ')[1]);
                         if (expandedGrades.has(grade)) {
-                            expandedGrades.delete(grade);
-                        } else {
-                            expandedGrades.add(grade);
+                            students.forEach(student => {
+                                displayData.push({ type: 'student', id: student.student_name, label: student.student_name, data: student, grade: grade });
+                            });
                         }
-                        drawVisualization();
                     });
 
-                // Merge enter and update selections
-                const allRows = rowsEnter.merge(rows);
+                    // --- 4. D3 VISUALIZATION - ENTER/UPDATE/EXIT ---
+                    svg.selectAll(".header-label").data(categories)
+                        .join("text")
+                        .attr("class", "header-label")
+                        .attr("x", d => xCategory(d) + xCategory.bandwidth() / 2)
+                        .attr("y", -10)
+                        .attr("text-anchor", "middle")
+                        .text(d => d);
 
-                allRows.transition().duration(500)
-                    .attr("transform", (d, i) => `translate(0, ${i * 40})`);
+                    const rows = svg.selectAll(".data-row")
+                        .data(displayData, d => d.id);
 
-                // Dots for each status code
-                categories.forEach(category => {
-                    const statusCodes = STATUS_CATEGORIES[category];
+                    rows.exit().remove();
+
+                    const rowsEnter = rows.enter().append("g")
+                        .attr("class", d => `data-row ${d.type}-row`);
+
+                    rowsEnter.append("text")
+                        .attr("class", "row-label")
+                        .attr("x", -10)
+                        .attr("y", 20)
+                        .attr("text-anchor", "end")
+                        .style("font-style", d => d.type === 'student' ? 'italic' : 'normal')
+                        .style("fill", d => d.type === 'student' ? '#555' : '#000')
+                        .text(d => d.label);
                     
-                    const dots = allRows.selectAll(`.dot-${category}`)
-                        .data(d => statusCodes.map(sc => ({ 
-                            sc: sc, 
-                            value: d.data[sc], 
-                            owner: d.label 
-                        })));
+                    rowsEnter.filter(d => d.type === 'grade')
+                        .on('click', (event, d) => {
+                            const grade = parseInt(d.label.split(' ')[1]);
+                            if (expandedGrades.has(grade)) {
+                                expandedGrades.delete(grade);
+                            } else {
+                                expandedGrades.add(grade);
+                            }
+                            drawVisualization();
+                        });
 
-                    dots.enter().append("circle")
-                        .attr("class", `dot dot-${category}`)
-                        .attr("cy", 20)
-                        .attr("r", 8)
-                        .merge(dots)
-                        .attr("cx", (d, i) => xCategory(category) + (i * 25) + 20)
-                        .on('mouseover', (event, d) => {
-                            tooltip.style('opacity', 1)
-                                .html(`<strong>${d.owner}</strong><br>Status: ${d.sc}<br>Value: ${d.value.toFixed(2)}`);
-                        })
-                        .on('mousemove', (event) => {
-                            tooltip.style('left', (event.pageX + 15) + 'px')
-                                .style('top', (event.pageY - 28) + 'px');
-                        })
-                        .on('mouseout', () => {
-                            tooltip.style('opacity', 0);
-                        })
-                        .transition().duration(300)
-                        .attr("fill", d => d.value !== undefined ? colorScale(d.value) : '#ccc');
-                });
-            }
-            
-            // Initial call to populate filters and draw the first view
-            updateBlockFilter(); 
+                    const allRows = rowsEnter.merge(rows);
+
+                    allRows.transition().duration(500)
+                        .attr("transform", (d, i) => `translate(0, ${i * 40})`);
+
+                    categories.forEach(category => {
+                        const statusCodes = STATUS_CATEGORIES[category];
+                        
+                        const dots = allRows.selectAll(`.dot-${category}`)
+                            .data(d => statusCodes.map(sc => ({ 
+                                sc: sc, 
+                                value: d.data[sc], 
+                                owner: d.label 
+                            })));
+
+                        dots.enter().append("circle")
+                            .attr("class", `dot dot-${category}`)
+                            .attr("cy", 20)
+                            .attr("r", 8)
+                            .merge(dots)
+                            .attr("cx", (d, i) => xCategory(category) + (i * 25) + 20)
+                            .on('mouseover', (event, d) => {
+                                tooltip.style('opacity', 1)
+                                    .html(`<strong>${d.owner}</strong><br>Status: ${d.sc}<br>Value: ${d.value.toFixed(2)}`);
+                            })
+                            .on('mousemove', (event) => {
+                                tooltip.style('left', (event.pageX + 15) + 'px')
+                                    .style('top', (event.pageY - 28) + 'px');
+                            })
+                            .on('mouseout', () => {
+                                tooltip.style('opacity', 0);
+                            })
+                            .transition().duration(300)
+                            .attr("fill", d => d.value !== undefined ? colorScale(d.value) : '#ccc');
+                    });
+                }
+                
+                updateBlockFilter(); 
+            });
+        } // End of initializeApp() function
+
+        // This function hides the app, for example on logout
+        function hideApp() {
+            appContainer.style.display = 'none';
+        }
+
+        // --- NETLIFY IDENTITY EVENT LISTENERS ---
+        // Check if a user is already logged in when the page loads
+        if (netlifyIdentity.currentUser()) {
+            initializeApp();
+        }
+
+        // Listen for the login event
+        netlifyIdentity.on('login', user => {
+            netlifyIdentity.close(); // Close the login modal
+            initializeApp();
+        });
+
+        // Listen for the logout event
+        netlifyIdentity.on('logout', () => {
+            hideApp();
         });
     </script>
 
